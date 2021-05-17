@@ -28,7 +28,7 @@ class Backtrack {
 	void PrintnClear();
 
 	size_t GoBack(size_t current_state);
-	std::vector<std::pair<size_t, std::stack<size_t>* > > state_space;
+	std::vector<std::pair<size_t, std::stack<size_t>*>> state_space;
 	std::vector<std::pair<size_t, size_t> > partial_embedding;
    
 };

@@ -11,13 +11,6 @@ Backtrack::Backtrack() {
 }
 Backtrack::~Backtrack() {}
 
-void Backtrack::PrintAllMatches(const Graph &data, const Graph &query,
-                                const CandidateSet &cs) {
-  std::cout << "t " << query.GetNumVertices() << "\n";
-
-  // implement your code here.
-}
-
 size_t Backtrack::GoBack(size_t current_state) {
   while (state_space[current_state].second->empty()) {
     current_state--;
