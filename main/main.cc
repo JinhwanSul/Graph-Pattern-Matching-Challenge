@@ -23,7 +23,7 @@ int main(int argc, char* argv[]) {
   Graph query(query_file_name, true);
   CandidateSet candidate_set(candidate_set_file_name);
 
-  Backtrack backtrack;
+  Backtrack backtrack = Backtrack(query);
 
   backtrack.PrintAllMatches(data, query, candidate_set);
 
