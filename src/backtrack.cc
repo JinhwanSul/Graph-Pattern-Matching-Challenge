@@ -100,14 +100,14 @@ void Backtrack::PrintnClear(size_t current_state) {
   {
     if(i!=current_state)
     {
-      printarray[i]=this->state_space[i].second.top;
+      printarray[state_space[i].first]=this->state_space[i].second.top;
     }
   }
 
   //u[current_state] 의 v가 empty 될때까지 v들을 하나씩 pop해서 넣어서 출력함
   while(!this->state_space[current_state].second.empty())
   {
-    printarray[current_state] = this->state_space[current_state].second.pop;
+    printarray[state_space[current_state].first] = this->state_space[current_state].second.pop;
     for(size_t i=0; i<n; i++)
     {
       std::cout << printarray[i];
