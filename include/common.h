@@ -18,6 +18,7 @@
 #include <stack>
 #include <iterator>
 #include <map>
+#include <time.h>
 
 using Vertex = int32_t;
 using Label = int32_t;

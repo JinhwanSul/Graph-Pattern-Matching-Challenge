@@ -36,7 +36,8 @@ Backtrack::~Backtrack() {}
 
 
 void Backtrack::PrintAllMatches(const Graph &data, const Graph &query, const CandidateSet &cs) {
-  
+  clock_t start_time, end_time;
+  start_time = clock();
   size_t root = SelectRoot(query, cs);
   size_t current_state = 0;
   size_t next_u = 0, next_state;
@@ -49,23 +50,26 @@ void Backtrack::PrintAllMatches(const Graph &data, const Graph &query, const Can
 #endif
 
   while (state_space[0].second.size() != 0) {
-    
+    end_time = clock();
+    if (end_time - start_time > 60*1000) {
+      printf("Time out\n");
+      printf("Total embedding %d found\n", this->count);
+      break;
+    }
     if (current_state == query.GetNumVertices()-1) {
       PrintnClear(current_state);
       current_state = GoBack(current_state);
     }
 
-    printf("[DEBUG] current_state = %ld, current_u = %ld\n",current_state, state_space[current_state].first);
     next_state = state_space[current_state + 1].first;
     if (next_state == SIZE_MAX){
       // next_u = NextU(state_space[current_state].first);
-      printf("[DEBUG11] before nextU\n");
-      print_vector(this->extendable_vertex);
+      //printf("[DEBUG11] before nextU\n");
+      //print_vector(this->extendable_vertex);
       next_u = NextU(data, query, cs);
-      printf("[DEBUG] next_u = %ld\n",next_u);
       DeleteExtendableVertex(next_u, query);
-      printf("[DEBUG11] after DeleteExtenableVertex\n");
-      print_vector(this->extendable_vertex);
+      //printf("[DEBUG11] after DeleteExtenableVertex\n");
+      //print_vector(this->extendable_vertex);
       current_state++;
       if (!PushU(next_u, current_state, cs, data, query)){
         current_state = GoBack(current_state);
@@ -86,14 +90,11 @@ size_t Backtrack::GoBack(size_t current_state) {
   while (state_space[current_state].second.empty()) {
     this->partial_embedding.erase(this->state_space[current_state].first);
     if (current_state == 0) {
-      printf("[DEBUG] pop every stack\n");
       break;
     }
     current_state--; 
-    printf("[DEBUG] top v %ld\n", state_space[current_state].second.top());
     state_space[current_state].second.pop();
   }
-  printf("[DEBUG] goback to %ld\n", current_state);
   return current_state;
 }
 
@@ -142,9 +143,7 @@ void Backtrack::DeleteExtendableVertex(size_t u, const Graph &query) {
   }
 
   for (iter = this->extendable_vertex.begin(); iter != this->extendable_vertex.end(); iter++) {
-    //printf("[DEBUG] *iter = %ld\n", *iter);
     if (*iter == u) {
-      //printf("[DEBUG] inside *iter = %ld\n", *iter);
       this->extendable_vertex.erase(iter);
       break;
     }
@@ -263,7 +262,7 @@ void Backtrack::PrintnClear(size_t current_state) {
 
 void print_vector(std::set<size_t> question) {
   std::set<size_t>::iterator iter;
-  printf("---[DEBUG] print vector----\n");
+  printf("---[VECTOR] print vector----\n");
   for (iter = question.begin(); iter != question.end(); iter++) {
     printf("%ld ", *iter);
   }
