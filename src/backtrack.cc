@@ -82,7 +82,7 @@ void Backtrack::PrintAllMatches(const Graph &data, const Graph &query, const Can
       }
     }    
   }
-  printf("Search Done!\n"); 
+  //printf("Search Done!\n"); 
 }
 
 size_t Backtrack::GoBack(size_t current_state) {
@@ -251,7 +251,7 @@ void Backtrack::PrintnClear(size_t current_state) {
     
     this->state_space[current_state].second.pop();
     this->count++;
-    std::cout << "\nresult " << this->count << std::endl;
+    //std::cout << "\nresult " << this->count << std::endl;
     for (size_t i = 0; i < n; i++) {
       std::cout << print_array[i] << " ";
     }
