@@ -39,43 +39,45 @@ int main(int argc, char* argv[]) {
     //조건 1 : injective
     //입력받은 v들끼리 중복 확인
 	for(size_t i = 0; i<array_size; i++)
-		{
-			for(size_t j = 0; j<i; j++)
+	{
+		for(size_t j = 0; j<i; j++)
+			{
+				if(array[i]==array[j]) 
 				{
-					if(array[i]==array[j]) 
-					{
-						printf("Not Valid");
-						return 0;
-					}
+					printf("Not injective\n");
+					printf("Not Valid\n");
+					return 0;
 				}
-		}
+			}
+	}
 
     //조건 2. Label 일치
     //입력 받은 v들이 순서대로 u0 u1 u2 에 대응되는 것들
     //따라서 i번째 v의 label == ui의 label 확인
 	for(size_t i = 0; i<array_size; i++)
+	{
+		if(data.GetLabel(i)!=query.GetLabel(array[i]))
 		{
-			if(data.GetLabel(i)!=query.GetLabel(array[i]))
-			{
-				printf("Not Valid");
-				return 0;
-			}
-		}    
+			printf("Label not match\n");
+			printf("Not Valid\n");
+			return 0;
+		}
+	}    
     
     //조건 3. query의 모든 edge가 data에 mapping 된 채로 연결.
-	for(size_t i = 0; i<query.GetNumVertices(); i++)
+	for(size_t i = 0; i<query.GetNumVertices(); i++){
+		for(size_t j = 0; j<i; j++)
 		{
-			for(size_t j = 0; j<i; j++)
+			if(query.IsNeighbor(i, j))
 			{
-				if(query.IsNeighbor(i, j))
+				if(!data.IsNeighbor(array[i], array[j]))
 				{
-					if(!data.IsNeighbor(array[i], array[j]))
-					{
-						printf("Not Valid");
-						return 0;
-					}
+					printf("Edge not match\n");
+					printf("Not Valid\n");
+					return 0;
 				}
 			}
 		}
-
+	}
+	printf("Success!\n");
 }
