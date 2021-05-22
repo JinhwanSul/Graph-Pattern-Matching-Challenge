@@ -5,47 +5,56 @@
 
 #include "backtrack.h"
 
+#define DEBUG
+
 Backtrack::Backtrack(const Graph &query) {
 
-  int i;
-  size_t query_vertices = query.GetNumVertices();
+  size_t i, query_vertices = query.GetNumVertices();
 
-  std::vector<std::pair<size_t, std::stack<size_t>*> > state_space_;
+  // std::vector<std::pair<size_t, std::stack<size_t>*>> state_space_;
   for (i = 0; i < query_vertices; i++) {
     std::stack<size_t> v_stack;
-    std::pair<size_t, std::stack<size_t>*> p;
-    p.first = -1;
-    p.second = &v_stack;
-    state_space_[i] = p;
+    std::pair<size_t, std::stack<size_t>> p;
+    p.first = SIZE_MAX;
+    p.second = v_stack;
+    this->state_space.push_back(p);
   }
-  this->state_space = state_space_;
+  // this->state_space = state_space_;
 
   // Maybe redundant
-  std::map<size_t, size_t> partial_embedding_;
-  this->partial_embedding = partial_embedding_;
-  std::vector<size_t> extendable_vertex_;
-  this->extendable_vertex = extendable_vertex_;
+  // std::map<size_t, size_t> partial_embedding_;
+  // this->partial_embedding = partial_embedding_;
+  // std::vector<size_t> extendable_vertex_;
+  // this->extendable_vertex = extendable_vertex_;
+  
 }
 
 Backtrack::~Backtrack() {}
 
 
 void Backtrack::PrintAllMatches(const Graph &data, const Graph &query, const CandidateSet &cs) {
+  
   size_t root = SelectRoot(query, cs);
   size_t current_state = 0;
-  PushU(root, current_state, cs, data, query);
-  size_t next_u, next_state;
+  size_t next_u = 0, next_state;
   
-  while (state_space[0].second->size() == 0) {
+  PushU(root, current_state, cs, data, query);
+
+#ifdef DEBUG
+  size_t first_u = this->state_space[0].first;
+  size_t size = this->state_space[0].second.size();
+#endif
+
+  while (state_space[0].second.size() != 0) {
     
     if (current_state == query.GetNumVertices()) {
       PrintnClear(current_state);
       current_state = GoBack(current_state);
     }
 
+    printf("[DEBUG] current_state = %ld, current_u = %ld\n",current_state, state_space[current_state].first);
     next_state = state_space[current_state + 1].first;
-    
-    if (next_state == -1){
+    if (next_state == SIZE_MAX){
       // next_u = NextU(state_space[current_state].first);
       next_u = NextU(data, query, cs);
       DeleteExtendableVertex(next_u, query);
@@ -65,9 +74,9 @@ void Backtrack::PrintAllMatches(const Graph &data, const Graph &query, const Can
 
 size_t Backtrack::GoBack(size_t current_state) {
   
-  while (state_space[current_state].second->empty()) {
+  while (state_space[current_state].second.empty()) {
     current_state--;
-    state_space[current_state].second->pop();
+    state_space[current_state].second.pop();
   }
   
   return current_state;
@@ -103,14 +112,14 @@ bool Backtrack::EmbeddingCondition(const Graph &data, const Graph &query, std::p
 }
 
 void Backtrack::DeleteExtendableVertex(size_t u, const Graph &query) {
-  int i;
-  size_t start_offset, end_offset;
+  size_t i, start_offset, end_offset;
   size_t child_candidate;
   std::vector<size_t>::iterator iter;
 
   for (iter = this->extendable_vertex.begin(); iter != this->extendable_vertex.end(); iter++) {
     if (*iter == u) {
       this->extendable_vertex.erase(iter);
+      break;
     }
   }
   
@@ -129,7 +138,7 @@ size_t Backtrack::NextU(const Graph &data, const Graph &query, const CandidateSe
   std::vector<size_t>::iterator iter;
   std::pair<size_t, size_t> u_v;
   int i, v_size, cmu_size, min_cmu_size = INT32_MAX;
-  size_t next_u, u, v;
+  size_t u, v, next_u = 0;
 
   for (iter = this->extendable_vertex.begin(); iter != this->extendable_vertex.end(); iter++) {
     u = *iter;
@@ -155,9 +164,8 @@ size_t Backtrack::NextU(const Graph &data, const Graph &query, const CandidateSe
 size_t Backtrack::SelectRoot(const Graph &query, const CandidateSet &cs) {
   //cs 에서 한 u당 v 갯수 / query에서 한 vertex에서 뻗어나가는 가짓수 최소
   size_t cs_size = query.GetNumVertices();
-  size_t tmp, root_number, min = 100;
-  size_t i;
-  size_t start_offset, end_offset;
+  size_t tmp, root_number = 0, min = 100;
+  size_t i, start_offset, end_offset;
 
   for (i = 0; i < cs_size; i++) {
     
@@ -184,10 +192,11 @@ bool Backtrack::PushU(size_t u, size_t current_state, const CandidateSet &cs, co
   //next u 정해주고서 embedding condition 따져서 가능한 v들 찾기
   //가능한 v 없으면 return false
   //next 위치에 u 삽입, 그 해당 -> 포인터에 v stack 삽입 
-  size_t i;
+  size_t i, v_size;
   std::pair<size_t, size_t> p1;
   size_t v, j = 0;
-  int v_size = cs.GetCandidateSize(u);
+  
+  v_size = cs.GetCandidateSize(u);
   
   this->state_space[current_state].first = u;
   
@@ -197,7 +206,7 @@ bool Backtrack::PushU(size_t u, size_t current_state, const CandidateSet &cs, co
     p1 = std::make_pair(u, v);
     
     if (EmbeddingCondition(data, query, p1)) {
-      this->state_space[current_state].second->push(v);
+      this->state_space[current_state].second.push(v);
       j++;
     }
   }
@@ -213,20 +222,21 @@ void Backtrack::PrintnClear(size_t current_state) {
   //u[current_state]의 에 해당되는 원소만 빼고 나머지 원소 다 채워넣음
   for (size_t i = 0; i < n; i++) {
     if(i != current_state) {
-      print_array[state_space[i].first] = this->state_space[i].second->top();
+      print_array[state_space[i].first] = this->state_space[i].second.top();
     }
   }
 
   //u[current_state] 의 v가 empty 될때까지 v들을 하나씩 pop해서 넣어서 출력함
-  while(!this->state_space[current_state].second->empty())
-  {
-    print_array[state_space[current_state].first] = this->state_space[current_state].second->top();
-    this->state_space[current_state].second->pop();
-    for(size_t i=0; i<n; i++)
-    {
+  while (!this->state_space[current_state].second.empty()) {
+    
+    print_array[state_space[current_state].first] = this->state_space[current_state].second.top();
+    
+    this->state_space[current_state].second.pop();
+    
+    for (size_t i = 0; i < n; i++) {
       std::cout << print_array[i];
     }
   }
-  
+  std::cout << std::endl;
   delete[] print_array;
 }
