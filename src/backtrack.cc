@@ -5,12 +5,15 @@
 
 #include "backtrack.h"
 
-#define DEBUG
+// #define DEBUG
+
+void print_vector(std::set<size_t> question);
+
 
 Backtrack::Backtrack(const Graph &query) {
 
   size_t i, query_vertices = query.GetNumVertices();
-
+  this->count = 0;
   // std::vector<std::pair<size_t, std::stack<size_t>*>> state_space_;
   for (i = 0; i < query_vertices; i++) {
     std::stack<size_t> v_stack;
@@ -47,7 +50,7 @@ void Backtrack::PrintAllMatches(const Graph &data, const Graph &query, const Can
 
   while (state_space[0].second.size() != 0) {
     
-    if (current_state == query.GetNumVertices()) {
+    if (current_state == query.GetNumVertices()-1) {
       PrintnClear(current_state);
       current_state = GoBack(current_state);
     }
@@ -56,8 +59,13 @@ void Backtrack::PrintAllMatches(const Graph &data, const Graph &query, const Can
     next_state = state_space[current_state + 1].first;
     if (next_state == SIZE_MAX){
       // next_u = NextU(state_space[current_state].first);
+      printf("[DEBUG11] before nextU\n");
+      print_vector(this->extendable_vertex);
       next_u = NextU(data, query, cs);
+      printf("[DEBUG] next_u = %ld\n",next_u);
       DeleteExtendableVertex(next_u, query);
+      printf("[DEBUG11] after DeleteExtenableVertex\n");
+      print_vector(this->extendable_vertex);
       current_state++;
       if (!PushU(next_u, current_state, cs, data, query)){
         current_state = GoBack(current_state);
@@ -69,16 +77,23 @@ void Backtrack::PrintAllMatches(const Graph &data, const Graph &query, const Can
         current_state = GoBack(current_state);
       }
     }    
-  } 
+  }
+  printf("Search Done!\n"); 
 }
 
 size_t Backtrack::GoBack(size_t current_state) {
   
   while (state_space[current_state].second.empty()) {
-    current_state--;
+    this->partial_embedding.erase(this->state_space[current_state].first);
+    if (current_state == 0) {
+      printf("[DEBUG] pop every stack\n");
+      break;
+    }
+    current_state--; 
+    printf("[DEBUG] top v %ld\n", state_space[current_state].second.top());
     state_space[current_state].second.pop();
   }
-  
+  printf("[DEBUG] goback to %ld\n", current_state);
   return current_state;
 }
 
@@ -114,28 +129,30 @@ bool Backtrack::EmbeddingCondition(const Graph &data, const Graph &query, std::p
 void Backtrack::DeleteExtendableVertex(size_t u, const Graph &query) {
   size_t i, start_offset, end_offset;
   size_t child_candidate;
-  std::vector<size_t>::iterator iter;
+  std::set<size_t>::iterator iter;
 
-  for (iter = this->extendable_vertex.begin(); iter != this->extendable_vertex.end(); iter++) {
-    if (*iter == u) {
-      this->extendable_vertex.erase(iter);
-      break;
-    }
-  }
-  
   start_offset = query.GetNeighborStartOffset(u);
   end_offset = query.GetNeighborEndOffset(u);
   for (i = start_offset; i < end_offset; i++) {
     child_candidate = query.GetNeighbor(i);
     // If child_candidate is not in partial_embedding, it is child of u.
-    if (this->partial_embedding.find(child_candidate) != this->partial_embedding.end()) {
-      this->extendable_vertex.push_back(child_candidate);
+    if (this->partial_embedding.find(child_candidate) == this->partial_embedding.end()) {
+      this->extendable_vertex.insert(child_candidate);
+    }
+  }
+
+  for (iter = this->extendable_vertex.begin(); iter != this->extendable_vertex.end(); iter++) {
+    //printf("[DEBUG] *iter = %ld\n", *iter);
+    if (*iter == u) {
+      //printf("[DEBUG] inside *iter = %ld\n", *iter);
+      this->extendable_vertex.erase(iter);
+      break;
     }
   }
 }
 
 size_t Backtrack::NextU(const Graph &data, const Graph &query, const CandidateSet &cs) {
-  std::vector<size_t>::iterator iter;
+  std::set<size_t>::iterator iter;
   std::pair<size_t, size_t> u_v;
   int i, v_size, cmu_size, min_cmu_size = INT32_MAX;
   size_t u, v, next_u = 0;
@@ -182,7 +199,7 @@ size_t Backtrack::SelectRoot(const Graph &query, const CandidateSet &cs) {
   start_offset = query.GetNeighborStartOffset(root_number);
   end_offset = query.GetNeighborEndOffset(root_number);
   for (i = start_offset; i < end_offset; i++) {
-    this->extendable_vertex.push_back(query.GetNeighbor(i));
+    this->extendable_vertex.insert(query.GetNeighbor(i));
   }
 
   return root_number;
@@ -211,11 +228,13 @@ bool Backtrack::PushU(size_t u, size_t current_state, const CandidateSet &cs, co
     }
   }
 
+  this->partial_embedding.insert({u, this->state_space[current_state].second.top()});
+
   return j != 0; // j == 0 means v-stack is empty, 
 }
 
 void Backtrack::PrintnClear(size_t current_state) {
-  //
+  
   size_t n = this->state_space.size();
   size_t *print_array = new size_t[n];
   
@@ -232,11 +251,21 @@ void Backtrack::PrintnClear(size_t current_state) {
     print_array[state_space[current_state].first] = this->state_space[current_state].second.top();
     
     this->state_space[current_state].second.pop();
-    
+    this->count++;
+    std::cout << "\nresult " << this->count << std::endl;
     for (size_t i = 0; i < n; i++) {
-      std::cout << print_array[i];
+      std::cout << print_array[i] << " ";
     }
   }
   std::cout << std::endl;
   delete[] print_array;
+}
+
+void print_vector(std::set<size_t> question) {
+  std::set<size_t>::iterator iter;
+  printf("---[DEBUG] print vector----\n");
+  for (iter = question.begin(); iter != question.end(); iter++) {
+    printf("%ld ", *iter);
+  }
+  printf("\n---------------------------\n");
 }

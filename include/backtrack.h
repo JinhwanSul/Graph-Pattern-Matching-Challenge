@@ -32,8 +32,8 @@ class Backtrack {
 
   std::vector<std::pair<size_t, std::stack<size_t>>> state_space;
   std::map<size_t, size_t> partial_embedding;
-  std::vector<size_t> extendable_vertex;
-
+  std::set<size_t> extendable_vertex;
+  int count;
 };
 
 #endif  // BACKTRACK_H_
