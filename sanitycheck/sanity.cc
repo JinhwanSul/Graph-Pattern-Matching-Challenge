@@ -56,7 +56,7 @@ int main(int argc, char* argv[]) {
     //따라서 i번째 v의 label == ui의 label 확인
 	for(size_t i = 0; i<array_size; i++)
 	{
-		if(data.GetLabel(i)!=query.GetLabel(array[i]))
+		if(query.GetLabel(i)!=data.GetLabel(array[i]))
 		{
 			printf("Label not match\n");
 			printf("Not Valid\n");
