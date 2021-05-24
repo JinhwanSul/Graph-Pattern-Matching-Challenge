@@ -7,7 +7,10 @@
 
 // #define DEBUG
 
-void print_vector(std::set<size_t> question);
+void print_set(std::set<size_t> question, const char *msg);
+void print_vector(std::vector<size_t> question, const char *msg);
+void print_partial_embedding(std::map<size_t, size_t> partial_embedding, const char *msg);
+void print_state_space(std::vector<std::pair<size_t, std::stack<size_t>>> question);
 
 
 Backtrack::Backtrack(const Graph &query) {
@@ -36,9 +39,10 @@ Backtrack::~Backtrack() {}
 
 
 void Backtrack::PrintAllMatches(const Graph &data, const Graph &query, const CandidateSet &cs) {
-  clock_t start_time, end_time;
-  start_time = clock();
+  time_t start_time, end_time = 0;
+  start_time = time(NULL);
   size_t root = SelectRoot(query, cs);
+  printf("[DEBUG] root is %ld\n", root);
   size_t current_state = 0;
   size_t next_u = 0, next_state;
   
@@ -50,8 +54,9 @@ void Backtrack::PrintAllMatches(const Graph &data, const Graph &query, const Can
 #endif
 
   while (state_space[0].second.size() != 0) {
-    end_time = clock();
-    if (end_time - start_time > 60*1000) {
+    time(&end_time);
+    printf("\n\n[DEBUG](end_time - start_time) = %ld\n", (end_time - start_time));
+    if ((end_time - start_time) >= 60) {
       printf("Time out\n");
       printf("Total embedding %d found\n", this->count);
       break;
@@ -63,36 +68,43 @@ void Backtrack::PrintAllMatches(const Graph &data, const Graph &query, const Can
 
     next_state = state_space[current_state + 1].first;
     if (next_state == SIZE_MAX){
-      // next_u = NextU(state_space[current_state].first);
-      //printf("[DEBUG11] before nextU\n");
-      //print_vector(this->extendable_vertex);
+      printf("[DEBUG11] before nextU\n");
+      print_set(this->extendable_vertex, "extendable vertex");
+      print_partial_embedding(this->partial_embedding, "partial_embedding");
       next_u = NextU(data, query, cs);
+      printf("[DEBUG] next_u = %ld\n", next_u);
       DeleteExtendableVertex(next_u, query);
-      //printf("[DEBUG11] after DeleteExtenableVertex\n");
-      //print_vector(this->extendable_vertex);
+      printf("[DEBUG11] after DeleteExtenableVertex\n");
+      print_set(this->extendable_vertex, "extendable vertex");
       current_state++;
       if (!PushU(next_u, current_state, cs, data, query)){
         current_state = GoBack(current_state);
       }
     } else {
       next_u = next_state;
+      printf("[DEBUG] (not calling NextU) next_u = %ld\n", next_u);
       current_state++;
       if (!PushU(next_u, current_state, cs, data, query)){
         current_state = GoBack(current_state);
       }
-    }    
+    }
+    print_state_space(this->state_space);
+    print_partial_embedding(this->partial_embedding, "partial_embedding");
+    printf("[DEBUG] ========================\n");   
   }
-  //printf("Search Done!\n"); 
+  printf("Search Done!\n"); 
 }
 
 size_t Backtrack::GoBack(size_t current_state) {
   
   while (state_space[current_state].second.empty()) {
+    printf("[DEBUG] Goback %ld\n", this->state_space[current_state].first);
     this->partial_embedding.erase(this->state_space[current_state].first);
+    print_partial_embedding(this->partial_embedding, "Goback");
     if (current_state == 0) {
       break;
     }
-    current_state--; 
+    current_state--;
     state_space[current_state].second.pop();
   }
   return current_state;
@@ -106,6 +118,7 @@ bool Backtrack::EmbeddingCondition(const Graph &data, const Graph &query, std::p
   std::vector<size_t>::iterator u_p;
   std::map<size_t, size_t>::iterator iter;
   
+  // if (u == 32) printf("[DEBUG] next_u = %ld v = %ld, check case 1\n", u, v);
   // Case 1: check if v is already in partial_embedding or not & find parent of u
   for (iter = this->partial_embedding.begin(); iter != this->partial_embedding.end(); iter++) {
     if (iter->second == v) {
@@ -116,9 +129,16 @@ bool Backtrack::EmbeddingCondition(const Graph &data, const Graph &query, std::p
     }
   }
 
+  // if (u == 32) {
+  //   printf("[DEBUG] next_u = %ld v = %ld, check case 2\n", u, v);
+  //   print_vector(parent_of_u, "parent_of_u");
+  //   print_partial_embedding(this->partial_embedding, "inside EC");
+  // }
   // Case 2: check if u_v connection state is same
   for (u_p = parent_of_u.begin(); u_p != parent_of_u.end(); u_p++) {
+    // if (u == 32 && v == 3428) printf("[DEBUG] u_p = %ld", *u_p);
     v_p = this->partial_embedding.find(*u_p)->second;
+    // if (u == 32 && v == 3428) printf("[DEBUG] v_p = %ld\n", v_p);
     if (!data.IsNeighbor(v, v_p)) {
       return false;
     }
@@ -216,6 +236,8 @@ bool Backtrack::PushU(size_t u, size_t current_state, const CandidateSet &cs, co
   
   this->state_space[current_state].first = u;
   
+  // if (u == 32) printf("[DEBUG] next_u = %ld\n", u);
+  
   for (i = 0; i < v_size; i++) {
     
     v = cs.GetCandidate(u, i);
@@ -226,8 +248,9 @@ bool Backtrack::PushU(size_t u, size_t current_state, const CandidateSet &cs, co
       j++;
     }
   }
-
-  this->partial_embedding.insert({u, this->state_space[current_state].second.top()});
+  if (j != 0) {
+    this->partial_embedding.insert({u, this->state_space[current_state].second.top()});
+  }
 
   return j != 0; // j == 0 means v-stack is empty, 
 }
@@ -260,11 +283,40 @@ void Backtrack::PrintnClear(size_t current_state) {
   delete[] print_array;
 }
 
-void print_vector(std::set<size_t> question) {
+void print_set(std::set<size_t> question, const char* msg) {
   std::set<size_t>::iterator iter;
-  printf("---[VECTOR] print vector----\n");
+  printf("---[SET] print %s----\n", msg);
   for (iter = question.begin(); iter != question.end(); iter++) {
     printf("%ld ", *iter);
   }
   printf("\n---------------------------\n");
+}
+
+void print_partial_embedding(std::map<size_t, size_t> partial_embedding, const char* msg) {
+  std::map<size_t,size_t>::iterator iter;
+  printf("-------[PARTIAL_EMBED] %s--------\n", msg);
+  printf("(u, v) = ");
+  for (iter = partial_embedding.begin(); iter != partial_embedding.end(); iter++) {
+    printf("(%ld, %ld) ", iter->first, iter->second);
+  }
+  printf("\n-------------------------------------\n");
+}
+
+void print_vector(std::vector<size_t> question, const char* msg) {
+  std::vector<size_t>::iterator iter;
+  printf("---[VECTOR] print %s----\n", msg);
+  for (iter = question.begin(); iter != question.end(); iter++) {
+    printf("%ld ", *iter);
+  }
+  printf("\n---------------------------\n");
+}
+
+void print_state_space(std::vector<std::pair<size_t, std::stack<size_t>>> question) {
+  std::vector<std::pair<size_t, std::stack<size_t>>>::iterator iter;
+  printf("----[STATE_SPACE]----------\n");
+  int i = 0;
+  for (iter = question.begin(); iter != question.end(); iter++, i++) {
+    printf("(%d, %ld)  ", i, iter->first);
+  }
+  printf("\n-----------------------\n");
 }
