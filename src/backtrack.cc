@@ -6,7 +6,7 @@
 #include "backtrack.h"
 #include <assert.h>
 
-#define JUMP_TIME 2
+#define JUMP_TIME 5
 
 void print_set(std::set<size_t> question, const char *msg);
 void print_vector(std::vector<size_t> question, const char *msg);
@@ -34,9 +34,10 @@ Backtrack::~Backtrack() {}
 
 
 void Backtrack::PrintAllMatches(const Graph &data, const Graph &query, const CandidateSet &cs) {
-  time_t max_curr_time_check, max_curr_time_last, start_time, end_time, print_time_check, print_time_last = 0;
+  time_t max_curr_time_check, max_curr_time_last, start_time, end_time, print_time_check, print_time_last;
   start_time = time(NULL);
   max_curr_time_last = time(NULL);
+  print_time_last = time(NULL);
   size_t root = SelectRoot(query, cs);
   // printf("[DEBUG] root is %ld\n", root);
   size_t current_state = 0;
@@ -56,6 +57,7 @@ void Backtrack::PrintAllMatches(const Graph &data, const Graph &query, const Can
       if(max_curr_time_check - max_curr_time_last > JUMP_TIME)
       {
         current_state = Jump(current_state);
+        print_time_last = time(NULL);
         max_curr_time_last = time(NULL);
       }
     }
@@ -64,9 +66,10 @@ void Backtrack::PrintAllMatches(const Graph &data, const Graph &query, const Can
       if (print_time_check - print_time_last > JUMP_TIME) {
         current_state = Jump(current_state);
         print_time_last = time(NULL);
+        max_curr_time_last = time(NULL);
       }
     }
-    printf("\n\n===============[DEBUG](end_time - start_time) = %ld==============\n", (end_time - start_time));
+    // printf("\n\n===============[DEBUG](end_time - start_time) = %ld==============\n", (end_time - start_time));
     if ((end_time - start_time) >= 60) {
       printf("Time out\n");
       printf("Total embedding %d found\n", this->count);
@@ -110,7 +113,7 @@ void Backtrack::PrintAllMatches(const Graph &data, const Graph &query, const Can
     // print_partial_embedding(this->partial_embedding, "partial_embedding");
     // print_state_space(this->state_space);
     // printf("[DEBUG] =========================================================\n");   
-    check_synchronization(this->state_space, this->partial_embedding);
+    // check_synchronization(this->state_space, this->partial_embedding);
   }
   printf("Search Done!\n"); 
   
@@ -145,7 +148,7 @@ size_t Backtrack::Jump(size_t current_state) {
   print_state_space(this->state_space);  
   
   size_t new_state = current_state;
-  size_t jump_ratio = 10;
+  size_t jump_ratio = 2;
   size_t target_state = (current_state > jump_ratio) ? (current_state - current_state / jump_ratio) : (current_state - 1);
   // size_t target_state = current_state - 3;
   
@@ -277,7 +280,8 @@ size_t Backtrack::SelectRoot(const Graph &query, const CandidateSet &cs) {
     this->extendable_vertex.insert(query.GetNeighbor(i));
   }
 
-  return root_number;
+  //return root_number;
+  return 29;
 }
 
 bool Backtrack::PushU(size_t u, size_t current_state, const CandidateSet &cs, const Graph &data, const Graph &query) {
