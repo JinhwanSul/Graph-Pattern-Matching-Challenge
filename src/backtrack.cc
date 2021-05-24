@@ -28,7 +28,7 @@ Backtrack::~Backtrack() {}
 
 
 void Backtrack::PrintAllMatches(const Graph &data, const Graph &query, const CandidateSet &cs) {
-  time_t start_time, end_time = 0;
+  time_t start_time, end_time, print_time = 0;
   start_time = time(NULL);
   size_t root = SelectRoot(query, cs);
   // printf("[DEBUG] root is %ld\n", root);
@@ -55,6 +55,7 @@ void Backtrack::PrintAllMatches(const Graph &data, const Graph &query, const Can
       // printf("[DEBUG] before nextU\n");
       // print_set(this->extendable_vertex, "extendable vertex");
       // print_partial_embedding(this->partial_embedding, "partial_embedding");
+      printf("[DEBUG] current state_space (%ld %ld)\n", state_space[current_state].first, state_space[current_state].second.top());
       next_u = NextU(data, query, cs);
       // printf("[DEBUG] next_u = %ld\n", next_u);
       DeleteExtendableVertex(next_u, query);
@@ -97,6 +98,23 @@ size_t Backtrack::GoBack(size_t current_state) {
 
   return current_state;
 }
+
+size_t Backtrack::Jump(size_t current_state) {
+  size_t curr_state = current_state;
+  size_t i = current_state;
+  
+  while (i>current_state/2)
+  {
+    this->partial_embedding.erase(this->state_space[current_state].first);    
+    StackClear(state_space[current_state].second);
+    current_state--;
+  }
+  this->partial_embedding.erase(this->state_space[current_state].first);
+  state_space[current_state].second.pop();
+  this->GoBack(current_state);
+  
+}
+
 
 bool Backtrack::EmbeddingCondition(const Graph &data, const Graph &query, std::pair<size_t, size_t> u_v) {
   
