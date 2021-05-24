@@ -42,7 +42,7 @@ void Backtrack::PrintAllMatches(const Graph &data, const Graph &query, const Can
   time_t start_time, end_time = 0;
   start_time = time(NULL);
   size_t root = SelectRoot(query, cs);
-  printf("[DEBUG] root is %ld\n", root);
+  // printf("[DEBUG] root is %ld\n", root);
   size_t current_state = 0;
   size_t next_u = 0, next_state;
   
@@ -55,7 +55,7 @@ void Backtrack::PrintAllMatches(const Graph &data, const Graph &query, const Can
 
   while (state_space[0].second.size() != 0) {
     time(&end_time);
-    printf("\n\n[DEBUG](end_time - start_time) = %ld\n", (end_time - start_time));
+    // printf("\n\n[DEBUG](end_time - start_time) = %ld\n", (end_time - start_time));
     if ((end_time - start_time) >= 60) {
       printf("Time out\n");
       printf("Total embedding %d found\n", this->count);
@@ -67,30 +67,30 @@ void Backtrack::PrintAllMatches(const Graph &data, const Graph &query, const Can
     }
 
     next_state = state_space[current_state + 1].first;
-    if (next_state == SIZE_MAX){
-      printf("[DEBUG11] before nextU\n");
-      print_set(this->extendable_vertex, "extendable vertex");
-      print_partial_embedding(this->partial_embedding, "partial_embedding");
+    if (next_state == SIZE_MAX) {
+      // printf("[DEBUG] before nextU\n");
+      // print_set(this->extendable_vertex, "extendable vertex");
+      // print_partial_embedding(this->partial_embedding, "partial_embedding");
       next_u = NextU(data, query, cs);
-      printf("[DEBUG] next_u = %ld\n", next_u);
+      // printf("[DEBUG] next_u = %ld\n", next_u);
       DeleteExtendableVertex(next_u, query);
-      printf("[DEBUG11] after DeleteExtenableVertex\n");
-      print_set(this->extendable_vertex, "extendable vertex");
+      // printf("[DEBUG] after DeleteExtenableVertex\n");
+      // print_set(this->extendable_vertex, "extendable vertex");
       current_state++;
       if (!PushU(next_u, current_state, cs, data, query)){
         current_state = GoBack(current_state);
       }
     } else {
       next_u = next_state;
-      printf("[DEBUG] (not calling NextU) next_u = %ld\n", next_u);
+      // printf("[DEBUG] (not calling NextU) next_u = %ld\n", next_u);
       current_state++;
       if (!PushU(next_u, current_state, cs, data, query)){
         current_state = GoBack(current_state);
       }
     }
-    print_state_space(this->state_space);
-    print_partial_embedding(this->partial_embedding, "partial_embedding");
-    printf("[DEBUG] ========================\n");   
+    // print_state_space(this->state_space);
+    // print_partial_embedding(this->partial_embedding, "partial_embedding");
+    // printf("[DEBUG] ========================\n");   
   }
   printf("Search Done!\n"); 
 }
@@ -98,15 +98,17 @@ void Backtrack::PrintAllMatches(const Graph &data, const Graph &query, const Can
 size_t Backtrack::GoBack(size_t current_state) {
   
   while (state_space[current_state].second.empty()) {
-    printf("[DEBUG] Goback %ld\n", this->state_space[current_state].first);
     this->partial_embedding.erase(this->state_space[current_state].first);
-    print_partial_embedding(this->partial_embedding, "Goback");
+    // print_partial_embedding(this->partial_embedding, "Goback");
     if (current_state == 0) {
       break;
     }
     current_state--;
+    this->partial_embedding.erase(this->state_space[current_state].first);
     state_space[current_state].second.pop();
   }
+  this->partial_embedding.insert({this->state_space[current_state].first, this->state_space[current_state].second.top()});
+
   return current_state;
 }
 
