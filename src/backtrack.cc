@@ -5,8 +5,6 @@
 
 #include "backtrack.h"
 
-// #define DEBUG
-
 void print_set(std::set<size_t> question, const char *msg);
 void print_vector(std::vector<size_t> question, const char *msg);
 void print_partial_embedding(std::map<size_t, size_t> partial_embedding, const char *msg);
@@ -17,22 +15,13 @@ Backtrack::Backtrack(const Graph &query) {
 
   size_t i, query_vertices = query.GetNumVertices();
   this->count = 0;
-  // std::vector<std::pair<size_t, std::stack<size_t>*>> state_space_;
   for (i = 0; i < query_vertices; i++) {
     std::stack<size_t> v_stack;
     std::pair<size_t, std::stack<size_t>> p;
     p.first = SIZE_MAX;
     p.second = v_stack;
     this->state_space.push_back(p);
-  }
-  // this->state_space = state_space_;
-
-  // Maybe redundant
-  // std::map<size_t, size_t> partial_embedding_;
-  // this->partial_embedding = partial_embedding_;
-  // std::vector<size_t> extendable_vertex_;
-  // this->extendable_vertex = extendable_vertex_;
-  
+  }  
 }
 
 Backtrack::~Backtrack() {}
@@ -47,11 +36,6 @@ void Backtrack::PrintAllMatches(const Graph &data, const Graph &query, const Can
   size_t next_u = 0, next_state;
   
   PushU(root, current_state, cs, data, query);
-
-#ifdef DEBUG
-  size_t first_u = this->state_space[0].first;
-  size_t size = this->state_space[0].second.size();
-#endif
 
   while (state_space[0].second.size() != 0) {
     time(&end_time);
@@ -99,7 +83,6 @@ size_t Backtrack::GoBack(size_t current_state) {
   
   while (state_space[current_state].second.empty()) {
     this->partial_embedding.erase(this->state_space[current_state].first);
-    // print_partial_embedding(this->partial_embedding, "Goback");
     if (current_state == 0) {
       break;
     }
@@ -107,7 +90,10 @@ size_t Backtrack::GoBack(size_t current_state) {
     this->partial_embedding.erase(this->state_space[current_state].first);
     state_space[current_state].second.pop();
   }
-  this->partial_embedding.insert({this->state_space[current_state].first, this->state_space[current_state].second.top()});
+  if (current_state != 0) {
+    this->partial_embedding.insert({this->state_space[current_state].first, 
+                                    this->state_space[current_state].second.top()});
+  }
 
   return current_state;
 }
@@ -120,7 +106,6 @@ bool Backtrack::EmbeddingCondition(const Graph &data, const Graph &query, std::p
   std::vector<size_t>::iterator u_p;
   std::map<size_t, size_t>::iterator iter;
   
-  // if (u == 32) printf("[DEBUG] next_u = %ld v = %ld, check case 1\n", u, v);
   // Case 1: check if v is already in partial_embedding or not & find parent of u
   for (iter = this->partial_embedding.begin(); iter != this->partial_embedding.end(); iter++) {
     if (iter->second == v) {
@@ -131,16 +116,9 @@ bool Backtrack::EmbeddingCondition(const Graph &data, const Graph &query, std::p
     }
   }
 
-  // if (u == 32) {
-  //   printf("[DEBUG] next_u = %ld v = %ld, check case 2\n", u, v);
-  //   print_vector(parent_of_u, "parent_of_u");
-  //   print_partial_embedding(this->partial_embedding, "inside EC");
-  // }
   // Case 2: check if u_v connection state is same
   for (u_p = parent_of_u.begin(); u_p != parent_of_u.end(); u_p++) {
-    // if (u == 32 && v == 3428) printf("[DEBUG] u_p = %ld", *u_p);
     v_p = this->partial_embedding.find(*u_p)->second;
-    // if (u == 32 && v == 3428) printf("[DEBUG] v_p = %ld\n", v_p);
     if (!data.IsNeighbor(v, v_p)) {
       return false;
     }
@@ -199,19 +177,20 @@ size_t Backtrack::NextU(const Graph &data, const Graph &query, const CandidateSe
   return next_u;
 }
 
+// Select root vertex with miminum critera value
+// criteria = (# of v corresponding to u in cs) / (Degree of vertex)
 size_t Backtrack::SelectRoot(const Graph &query, const CandidateSet &cs) {
-  //cs 에서 한 u당 v 갯수 / query에서 한 vertex에서 뻗어나가는 가짓수 최소
   size_t cs_size = query.GetNumVertices();
-  size_t tmp, root_number = 0, min = 100;
+  size_t criteria, root_number = 0, min = 100;
   size_t i, start_offset, end_offset;
 
   for (i = 0; i < cs_size; i++) {
     
     if (query.GetDegree(i) == 0) { break; }
     
-    tmp = cs.GetCandidateSize(i) / query.GetDegree(i);
-    if (tmp < min) {
-      min = tmp;
+    criteria = cs.GetCandidateSize(i) / query.GetDegree(i);
+    if (criteria < min) {
+      min = criteria;
       root_number = i;
     }
   }
@@ -227,19 +206,17 @@ size_t Backtrack::SelectRoot(const Graph &query, const CandidateSet &cs) {
 }
 
 bool Backtrack::PushU(size_t u, size_t current_state, const CandidateSet &cs, const Graph &data, const Graph &query) {
-  //next u 정해주고서 embedding condition 따져서 가능한 v들 찾기
-  //가능한 v 없으면 return false
-  //next 위치에 u 삽입, 그 해당 -> 포인터에 v stack 삽입 
+
   size_t i, v_size;
   std::pair<size_t, size_t> p1;
-  size_t v, j = 0;
+  size_t v, num_v_in_stack = 0;
   
   v_size = cs.GetCandidateSize(u);
   
   this->state_space[current_state].first = u;
   
-  // if (u == 32) printf("[DEBUG] next_u = %ld\n", u);
-  
+  // Find possible v-s in candidate set by checking embedding condition
+  // Push it to state space
   for (i = 0; i < v_size; i++) {
     
     v = cs.GetCandidate(u, i);
@@ -247,37 +224,36 @@ bool Backtrack::PushU(size_t u, size_t current_state, const CandidateSet &cs, co
     
     if (EmbeddingCondition(data, query, p1)) {
       this->state_space[current_state].second.push(v);
-      j++;
+      num_v_in_stack++;
     }
   }
-  if (j != 0) {
+  if (num_v_in_stack != 0) {
     this->partial_embedding.insert({u, this->state_space[current_state].second.top()});
   }
 
-  return j != 0; // j == 0 means v-stack is empty, 
+  return num_v_in_stack != 0;
 }
 
 void Backtrack::PrintnClear(size_t current_state) {
   
-  size_t n = this->state_space.size();
+  size_t i, n = this->state_space.size();
   size_t *print_array = new size_t[n];
   
-  //u[current_state]의 에 해당되는 원소만 빼고 나머지 원소 다 채워넣음
-  for (size_t i = 0; i < n; i++) {
-    if(i != current_state) {
+  // Fill print_array with top element of v-stacks from state_space (= Embedding)
+  for (i = 0; i < n; i++) {
+    if (i != current_state) {
       print_array[state_space[i].first] = this->state_space[i].second.top();
     }
   }
 
-  //u[current_state] 의 v가 empty 될때까지 v들을 하나씩 pop해서 넣어서 출력함
   while (!this->state_space[current_state].second.empty()) {
     
     print_array[state_space[current_state].first] = this->state_space[current_state].second.top();
     
     this->state_space[current_state].second.pop();
     this->count++;
-    //std::cout << "\nresult " << this->count << std::endl;
-    for (size_t i = 0; i < n; i++) {
+    // std::cout << "\nresult " << this->count << std::endl;
+    for (i = 0; i < n; i++) {
       std::cout << print_array[i] << " ";
     }
   }
@@ -285,6 +261,8 @@ void Backtrack::PrintnClear(size_t current_state) {
   delete[] print_array;
 }
 
+
+// Helper functions for Debugging
 void print_set(std::set<size_t> question, const char* msg) {
   std::set<size_t>::iterator iter;
   printf("---[SET] print %s----\n", msg);
