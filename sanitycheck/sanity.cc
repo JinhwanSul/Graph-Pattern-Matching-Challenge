@@ -45,6 +45,7 @@ int main(int argc, char* argv[]) {
 				if(array[i]==array[j]) 
 				{
 					printf("Not injective\n");
+					printf("u1 : %ld, v1 : %ld, u2 : %ld, v2 : %ld\n", i, array[i], j, array[j]);
 					printf("Not Valid\n");
 					return 0;
 				}
@@ -59,6 +60,7 @@ int main(int argc, char* argv[]) {
 		if(query.GetLabel(i)!=data.GetLabel(array[i]))
 		{
 			printf("Label not match\n");
+			printf("u1 : %ld, v1 : %ld\n", i, array[i]);
 			printf("Not Valid\n");
 			return 0;
 		}
@@ -73,6 +75,7 @@ int main(int argc, char* argv[]) {
 				if(!data.IsNeighbor(array[i], array[j]))
 				{
 					printf("Edge not match\n");
+					printf("u1 : %ld, v1 : %ld, u2 : %ld, v2 : %ld\n", i, array[i], j, array[j]);
 					printf("Not Valid\n");
 					return 0;
 				}
