@@ -4,11 +4,14 @@
  */
 
 #include "backtrack.h"
+#include <assert.h>
 
 void print_set(std::set<size_t> question, const char *msg);
 void print_vector(std::vector<size_t> question, const char *msg);
 void print_partial_embedding(std::map<size_t, size_t> partial_embedding, const char *msg);
 void print_state_space(std::vector<std::pair<size_t, std::stack<size_t>>> question);
+void check_synchronization(std::vector<std::pair<size_t, std::stack<size_t>>> state_space,
+                          std::map<size_t, size_t> partial_embedding);
 
 
 Backtrack::Backtrack(const Graph &query) {
@@ -39,12 +42,13 @@ void Backtrack::PrintAllMatches(const Graph &data, const Graph &query, const Can
 
   while (state_space[0].second.size() != 0) {
     time(&end_time);
-    // printf("\n\n[DEBUG](end_time - start_time) = %ld\n", (end_time - start_time));
-    if ((end_time - start_time) >= 60) {
-      printf("Time out\n");
-      printf("Total embedding %d found\n", this->count);
-      break;
-    }
+    printf("\n\n===============[DEBUG](end_time - start_time) = %ld==============\n", (end_time - start_time));
+    // if ((end_time - start_time) >= 60) {
+    //   printf("Time out\n");
+    //   printf("Total embedding %d found\n", this->count);
+    //   break;
+    // }
+    // printf("[DEBUG] current_state = %ld\n", current_state);
     if (current_state == query.GetNumVertices()-1) {
       PrintnClear(current_state);
       current_state = GoBack(current_state);
@@ -69,13 +73,15 @@ void Backtrack::PrintAllMatches(const Graph &data, const Graph &query, const Can
       next_u = next_state;
       // printf("[DEBUG] (not calling NextU) next_u = %ld\n", next_u);
       current_state++;
-      if (!PushU(next_u, current_state, cs, data, query)){
+      if (!PushU(next_u, current_state, cs, data, query)) {
+        // print_partial_embedding(this->partial_embedding, "before GoBack");
         current_state = GoBack(current_state);
       }
     }
-    // print_state_space(this->state_space);
     // print_partial_embedding(this->partial_embedding, "partial_embedding");
-    // printf("[DEBUG] ========================\n");   
+    // print_state_space(this->state_space);
+    // printf("[DEBUG] =========================================================\n");   
+    check_synchronization(this->state_space, this->partial_embedding);
   }
   printf("Search Done!\n"); 
 }
@@ -270,7 +276,7 @@ void Backtrack::PrintnClear(size_t current_state) {
     
     this->state_space[current_state].second.pop();
     this->count++;
-    // std::cout << "\nresult " << this->count << std::endl;
+    std::cout << "\nresult " << this->count << std::endl;
     for (i = 0; i < n; i++) {
       std::cout << print_array[i] << " ";
     }
@@ -314,7 +320,28 @@ void print_state_space(std::vector<std::pair<size_t, std::stack<size_t>>> questi
   printf("----[STATE_SPACE]----------\n");
   int i = 0;
   for (iter = question.begin(); iter != question.end(); iter++, i++) {
-    printf("(%d, %ld)  ", i, iter->first);
+    if (iter->second.empty()) {
+      printf("([%d], %ld)->E  ", i, iter->first);
+    } else {
+      printf("([%d], %ld)->%ld  ", i, iter->first, iter->second.top());
+    }
   }
   printf("\n-----------------------\n");
+}
+
+void check_synchronization(std::vector<std::pair<size_t, std::stack<size_t>>> state_space, 
+                          std::map<size_t, size_t> partial_embedding) {
+  std::vector<std::pair<size_t, std::stack<size_t>>>::iterator iter;
+  size_t v_from_stack, u_from_stack, v_from_pe;
+  for (iter = state_space.begin(); iter != state_space.end(); iter++) {
+    if (!iter->second.empty()) {
+      v_from_stack = iter->second.top();
+      u_from_stack = iter->first;
+      v_from_pe = partial_embedding.find(u_from_stack)->second;
+      if(v_from_pe != v_from_stack) {
+        printf("[ERROR] u(%ld) -> v_from_pe(%ld), v_from_stack(%ld)\n", u_from_stack, v_from_pe, v_from_stack);
+        assert(v_from_pe != v_from_stack);
+      }
+    }  
+  }
 }

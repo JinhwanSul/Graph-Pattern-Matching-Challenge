@@ -1,10 +1,10 @@
 mkdir build/result
 
 # Execute hprd n1~n8
-./build/main/program ./data/lcc_hprd.igraph ./query/lcc_hprd_n1.igraph ./candidate_set/lcc_hprd_n1.cs > ./build/result/lcc_hprd_s1_result.txt
-./build/main/program ./data/lcc_hprd.igraph ./query/lcc_hprd_n3.igraph ./candidate_set/lcc_hprd_n3.cs > ./build/result/lcc_hprd_s3_result.txt
-./build/main/program ./data/lcc_hprd.igraph ./query/lcc_hprd_n5.igraph ./candidate_set/lcc_hprd_n5.cs > ./build/result/lcc_hprd_s5_result.txt
-./build/main/program ./data/lcc_hprd.igraph ./query/lcc_hprd_n8.igraph ./candidate_set/lcc_hprd_n8.cs > ./build/result/lcc_hprd_s8_result.txt
+./build/main/program ./data/lcc_hprd.igraph ./query/lcc_hprd_n1.igraph ./candidate_set/lcc_hprd_n1.cs > ./build/result/lcc_hprd_n1_result.txt
+./build/main/program ./data/lcc_hprd.igraph ./query/lcc_hprd_n3.igraph ./candidate_set/lcc_hprd_n3.cs > ./build/result/lcc_hprd_n3_result.txt
+./build/main/program ./data/lcc_hprd.igraph ./query/lcc_hprd_n5.igraph ./candidate_set/lcc_hprd_n5.cs > ./build/result/lcc_hprd_n5_result.txt
+./build/main/program ./data/lcc_hprd.igraph ./query/lcc_hprd_n8.igraph ./candidate_set/lcc_hprd_n8.cs > ./build/result/lcc_hprd_n8_result.txt
 
 # Execute hprd s1~s8
 ./build/main/program ./data/lcc_hprd.igraph ./query/lcc_hprd_s1.igraph ./candidate_set/lcc_hprd_s1.cs > ./build/result/lcc_hprd_s1_result.txt
