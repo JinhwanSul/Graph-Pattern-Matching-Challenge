@@ -6,6 +6,8 @@
 #include "backtrack.h"
 #include <assert.h>
 
+#define JUMP_TIME 3
+
 void print_set(std::set<size_t> question, const char *msg);
 void print_vector(std::vector<size_t> question, const char *msg);
 void print_partial_embedding(std::map<size_t, size_t> partial_embedding, const char *msg);
@@ -45,10 +47,12 @@ void Backtrack::PrintAllMatches(const Graph &data, const Graph &query, const Can
   while (state_space[0].second.size() != 0) {
     time(&end_time);
     time(&print_time_check);
-    if (print_time_check - print_time_last > 5) {
-      Jump(current_state);
+
+    if (print_time_check - print_time_last > JUMP_TIME) {
+      current_state = Jump(current_state);
+      print_time_last = time(NULL);
     }
-    printf("\n\n===============[DEBUG](end_time - start_time) = %ld==============\n", (end_time - start_time));
+    //printf("\n\n===============[DEBUG](end_time - start_time) = %ld==============\n", (end_time - start_time));
     // if ((end_time - start_time) >= 60) {
     //   printf("Time out\n");
     //   printf("Total embedding %d found\n", this->count);
@@ -66,7 +70,7 @@ void Backtrack::PrintAllMatches(const Graph &data, const Graph &query, const Can
       // printf("[DEBUG] before nextU\n");
       // print_set(this->extendable_vertex, "extendable vertex");
       // print_partial_embedding(this->partial_embedding, "partial_embedding");
-      printf("[DEBUG] current state_space (%ld %ld)\n", state_space[current_state].first, state_space[current_state].second.top());
+      // printf("[DEBUG] current state_space (%ld %ld)\n", state_space[current_state].first, state_space[current_state].second.top());
       next_u = NextU(data, query, cs);
       // printf("[DEBUG] next_u = %ld\n", next_u);
       DeleteExtendableVertex(next_u, query);
@@ -104,6 +108,8 @@ size_t Backtrack::GoBack(size_t current_state) {
     this->partial_embedding.erase(this->state_space[current_state].first);
     state_space[current_state].second.pop();
   }
+  // print_state_space(state_space);
+  // print_partial_embedding(partial_embedding, "[DEBUG]");
   if (current_state != 0) {
     this->partial_embedding.insert({this->state_space[current_state].first, 
                                     this->state_space[current_state].second.top()});
@@ -112,20 +118,36 @@ size_t Backtrack::GoBack(size_t current_state) {
   return current_state;
 }
 
-void Backtrack::Jump(size_t current_state) {
-  size_t curr_state = current_state;
-  size_t i = current_state;
+size_t Backtrack::Jump(size_t current_state) {
+  printf("[DEBUG] current_state = %ld\n", current_state);
+  if (current_state == 1) { return current_state; }
   
-  while (i>current_state/2)
-  {
-    this->partial_embedding.erase(this->state_space[current_state].first);    
-    StackClear(state_space[current_state].second);
-    current_state--;
+  print_partial_embedding(partial_embedding, "[DEBUG] before jump");
+  print_state_space(this->state_space);  
+  
+  size_t new_state = current_state;
+  size_t jump_ratio = 8;
+  size_t target_state = (current_state > jump_ratio) ? (current_state / jump_ratio) : (current_state - 1);
+  
+  while(!this->state_space[new_state].second.empty()) {
+    this->state_space[new_state].second.pop();
   }
-  this->partial_embedding.erase(this->state_space[current_state].first);
-  state_space[current_state].second.pop();
-  this->GoBack(current_state);
-  
+  while (new_state > target_state) {
+    // clear stack
+    this->partial_embedding.erase(this->state_space[new_state].first);
+    new_state--;
+    this->partial_embedding.erase(this->state_space[new_state].first);
+    while(!this->state_space[new_state].second.empty()) {
+      this->state_space[new_state].second.pop();
+    }
+  }
+   new_state = this->GoBack(new_state);
+
+  print_partial_embedding(partial_embedding, "[DEBUG] after jump"); 
+  print_state_space(this->state_space);  
+
+  printf("[DEBUG] new_state = %ld\n", new_state);
+  return new_state;
 }
 
 
@@ -290,14 +312,6 @@ void Backtrack::PrintnClear(size_t current_state) {
   }
   std::cout << std::endl;
   delete[] print_array;
-}
-
-
-// Helper functions for STL stack
-void StackClear(std::stack<size_t> v_stack) {
-  while (!v_stack.empty()) {
-    v_stack.pop();
-  }
 }
 
 // Helper functions for Debugging
