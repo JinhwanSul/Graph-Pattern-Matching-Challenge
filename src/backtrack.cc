@@ -12,6 +12,7 @@ void print_partial_embedding(std::map<size_t, size_t> partial_embedding, const c
 void print_state_space(std::vector<std::pair<size_t, std::stack<size_t>>> question);
 void check_synchronization(std::vector<std::pair<size_t, std::stack<size_t>>> state_space,
                           std::map<size_t, size_t> partial_embedding);
+void StackClear(std::stack<size_t> v_stack);      
 
 
 Backtrack::Backtrack(const Graph &query) {
@@ -31,17 +32,22 @@ Backtrack::~Backtrack() {}
 
 
 void Backtrack::PrintAllMatches(const Graph &data, const Graph &query, const CandidateSet &cs) {
-  time_t start_time, end_time, print_time = 0;
+  time_t print_time_check, print_time_last, start_time, end_time = 0;
   start_time = time(NULL);
+  print_time_last = time(NULL);
   size_t root = SelectRoot(query, cs);
   // printf("[DEBUG] root is %ld\n", root);
   size_t current_state = 0;
   size_t next_u = 0, next_state;
-  
+
   PushU(root, current_state, cs, data, query);
 
   while (state_space[0].second.size() != 0) {
     time(&end_time);
+    time(&print_time_check);
+    if (print_time_check - print_time_last > 5) {
+      Jump(current_state);
+    }
     printf("\n\n===============[DEBUG](end_time - start_time) = %ld==============\n", (end_time - start_time));
     // if ((end_time - start_time) >= 60) {
     //   printf("Time out\n");
@@ -51,6 +57,7 @@ void Backtrack::PrintAllMatches(const Graph &data, const Graph &query, const Can
     // printf("[DEBUG] current_state = %ld\n", current_state);
     if (current_state == query.GetNumVertices()-1) {
       PrintnClear(current_state);
+      print_time_last = time(NULL);
       current_state = GoBack(current_state);
     }
 
@@ -105,7 +112,7 @@ size_t Backtrack::GoBack(size_t current_state) {
   return current_state;
 }
 
-size_t Backtrack::Jump(size_t current_state) {
+void Backtrack::Jump(size_t current_state) {
   size_t curr_state = current_state;
   size_t i = current_state;
   
@@ -285,6 +292,13 @@ void Backtrack::PrintnClear(size_t current_state) {
   delete[] print_array;
 }
 
+
+// Helper functions for STL stack
+void StackClear(std::stack<size_t> v_stack) {
+  while (!v_stack.empty()) {
+    v_stack.pop();
+  }
+}
 
 // Helper functions for Debugging
 void print_set(std::set<size_t> question, const char* msg) {
