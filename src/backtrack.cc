@@ -38,6 +38,7 @@ void Backtrack::PrintAllMatches(const Graph &data, const Graph &query, const Can
   size_t next_u = 0, next_state;
   size_t max_current_state = 0;
 
+  printf("t %zu\n", query.GetNumVertices());
 
   PushU(root, current_state, cs, data, query);
 
@@ -217,7 +218,9 @@ size_t Backtrack::NextU(const Graph &data, const Graph &query, const CandidateSe
       next_u = u;
     }
     else if (cmu_size == min_cmu_size) {
-      if (query.GetLabelFrequency(u_label) <= query.GetLabelFrequency(next_u_label)) {
+      if (query.GetLabelFrequency(u_label) < query.GetLabelFrequency(next_u_label)) {
+        next_u = u;
+      } else if (query.GetLabelFrequency(u_label) == query.GetLabelFrequency(next_u_label)) {
         if (query.GetDegree(u) > query.GetDegree(next_u)) {
           next_u = u;
         }
@@ -333,7 +336,7 @@ void Backtrack::PrintnClear(size_t current_state) {
     this->count++;
     
     // std::cout << "\nresult " << this->count << std::endl;
-    
+    std::cout << "a ";
     for (i = 0; i < n; i++) {
       std::cout << print_array[i] << " ";
     }

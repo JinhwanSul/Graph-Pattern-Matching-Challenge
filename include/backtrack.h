@@ -26,7 +26,6 @@ class Backtrack {
   size_t SelectRoot(const Graph &query, const CandidateSet &cs);
   bool PushU(size_t u, size_t current_state, const CandidateSet &cs, const Graph &data, const Graph &query); // true: v-stack is not empty
   void PrintnClear(size_t current_state);
-  
   size_t Jump(size_t current_state);
 
   std::vector<std::pair<size_t, std::stack<size_t>>> state_space;
