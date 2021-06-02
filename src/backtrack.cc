@@ -58,18 +58,18 @@ void Backtrack::PrintAllMatches(const Graph &data, const Graph &query, const Can
       if(max_curr_time_check - max_curr_time_last > JUMP_TIME && end_time - start_time > 30)
       {
         current_state = Jump(current_state);
-        print_time_last = time(NULL);
+        // print_time_last = time(NULL);
         max_curr_time_last = time(NULL);
       }
     }
-    else 
-    {
-      if (print_time_check - print_time_last > JUMP_TIME && end_time - start_time > 30) {
-        current_state = Jump(current_state);
-        print_time_last = time(NULL);
-        max_curr_time_last = time(NULL);
-      }
-    }
+    // else 
+    // {
+    //   if (print_time_check - print_time_last > 1 && end_time - start_time > 30) {
+    //     current_state = Jump(current_state);
+    //     print_time_last = time(NULL);
+    //     max_curr_time_last = time(NULL);
+    //   }
+    // }
     // printf("\n\n===============[DEBUG](end_time - start_time) = %ld==============\n", (end_time - start_time));
     if ((end_time - start_time) >= 60) {
       printf("Time out\n");
