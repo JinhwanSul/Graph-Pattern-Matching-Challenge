@@ -16,6 +16,7 @@ void check_synchronization(std::vector<std::pair<size_t, std::stack<size_t>>> st
                           std::map<size_t, size_t> partial_embedding);
 void StackClear(std::stack<size_t> v_stack);      
 
+void print_u_info(const Graph &query, const CandidateSet &cs, size_t u, size_t cmu);
 
 Backtrack::Backtrack(const Graph &query) {
 
@@ -112,7 +113,6 @@ void Backtrack::PrintAllMatches(const Graph &data, const Graph &query, const Can
     }
     // print_partial_embedding(this->partial_embedding, "partial_embedding");
     // print_state_space(this->state_space);
-    // printf("[DEBUG] =========================================================\n");   
     // check_synchronization(this->state_space, this->partial_embedding);
   }
   printf("Search Done!\n"); 
@@ -246,11 +246,18 @@ size_t Backtrack::NextU(const Graph &data, const Graph &query, const CandidateSe
       }
     }
     
-    if (cmu_size < min_cmu_size) {
+    if (cmu_size < min_cmu_size && cmu_size != 0) {
+    //if (cmu_size < min_cmu_size) {
       min_cmu_size = cmu_size;
       next_u = u;
     }
   }
+
+  if (min_cmu_size == INT32_MAX) {
+    next_u = u;
+  }
+
+  print_u_info(query, cs, next_u, min_cmu_size);
 
   return next_u;
 }
@@ -280,8 +287,9 @@ size_t Backtrack::SelectRoot(const Graph &query, const CandidateSet &cs) {
     this->extendable_vertex.insert(query.GetNeighbor(i));
   }
 
-  //return root_number;
-  return 29;
+  printf("===========[INSIGHT PLEASE] total vertices %d =========\n", query.GetNumVertices());
+  print_u_info(query, cs, root_number, -1);
+  return root_number;
 }
 
 bool Backtrack::PushU(size_t u, size_t current_state, const CandidateSet &cs, const Graph &data, const Graph &query) {
@@ -296,6 +304,7 @@ bool Backtrack::PushU(size_t u, size_t current_state, const CandidateSet &cs, co
   
   // Find possible v-s in candidate set by checking embedding condition
   // Push it to state space
+
   for (i = 0; i < v_size; i++) {
     
     v = cs.GetCandidate(u, i);
@@ -339,6 +348,9 @@ void Backtrack::PrintnClear(size_t current_state) {
   std::cout << std::endl;
   delete[] print_array;
 }
+
+
+
 
 // Helper functions for Debugging
 void print_set(std::set<size_t> question, const char* msg) {
@@ -398,4 +410,8 @@ void check_synchronization(std::vector<std::pair<size_t, std::stack<size_t>>> st
       }
     }  
   }
+}
+
+void print_u_info(const Graph &query, const CandidateSet &cs, size_t u, size_t cmu) {
+  printf("u = %ld |  Deg = %ld | CandidateSize = %ld | CMU = %ld\n", u, query.GetDegree(u), cs.GetCandidateSize(u), cmu);
 }
