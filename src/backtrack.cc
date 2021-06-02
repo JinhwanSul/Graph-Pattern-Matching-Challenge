@@ -86,8 +86,7 @@ void Backtrack::PrintAllMatches(const Graph &data, const Graph &query, const Can
     // print_state_space(this->state_space);
     // check_synchronization(this->state_space, this->partial_embedding);
   }
-  printf("Search Done!\n"); 
-  
+  // printf("Search Done!\n"); 
 }
 
 size_t Backtrack::GoBack(size_t current_state) {
@@ -341,7 +340,7 @@ void Backtrack::PrintnClear(size_t current_state) {
     std::cout << std::endl;
 
     if (this->count >= 100000) {
-      printf("100000 Embeddings found!\n");
+      // printf("100000 Embeddings found!\n");
       exit(0);
     }
   }
