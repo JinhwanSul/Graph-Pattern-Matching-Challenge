@@ -6,7 +6,7 @@
 #include "backtrack.h"
 #include <assert.h>
 
-#define JUMP_TIME 30
+#define JUMP_TIME 0.1
 
 void print_set(std::set<size_t> question, const char *msg);
 void print_vector(std::vector<size_t> question, const char *msg);
@@ -55,7 +55,7 @@ void Backtrack::PrintAllMatches(const Graph &data, const Graph &query, const Can
     
 
     if (max_current_state < query.GetNumVertices()-1) {
-      if(max_curr_time_check - max_curr_time_last > JUMP_TIME)
+      if(max_curr_time_check - max_curr_time_last > JUMP_TIME && end_time - start_time > 30)
       {
         current_state = Jump(current_state);
         print_time_last = time(NULL);
@@ -64,7 +64,7 @@ void Backtrack::PrintAllMatches(const Graph &data, const Graph &query, const Can
     }
     else 
     {
-      if (print_time_check - print_time_last > JUMP_TIME) {
+      if (print_time_check - print_time_last > JUMP_TIME && end_time - start_time > 30) {
         current_state = Jump(current_state);
         print_time_last = time(NULL);
         max_curr_time_last = time(NULL);
