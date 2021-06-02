@@ -2,11 +2,7 @@
  * @file backtrack.cc
  *
  */
-
 #include "backtrack.h"
-#include <assert.h>
-
-#define JUMP_TIME 0.1
 
 void print_set(std::set<size_t> question, const char *msg);
 void print_vector(std::vector<size_t> question, const char *msg);
@@ -14,9 +10,8 @@ void print_partial_embedding(std::map<size_t, size_t> partial_embedding, const c
 void print_state_space(std::vector<std::pair<size_t, std::stack<size_t>>> question);
 void check_synchronization(std::vector<std::pair<size_t, std::stack<size_t>>> state_space,
                           std::map<size_t, size_t> partial_embedding);
-void StackClear(std::stack<size_t> v_stack);      
-
 void print_u_info(const Graph &query, const CandidateSet &cs, size_t u, size_t cmu);
+
 
 Backtrack::Backtrack(const Graph &query) {
 
@@ -33,14 +28,12 @@ Backtrack::Backtrack(const Graph &query) {
 
 Backtrack::~Backtrack() {}
 
-
 void Backtrack::PrintAllMatches(const Graph &data, const Graph &query, const CandidateSet &cs) {
-  time_t max_curr_time_check, max_curr_time_last, start_time, end_time, print_time_check, print_time_last;
+  
+  time_t max_curr_time_check, max_curr_time_last, start_time, end_time;
   start_time = time(NULL);
   max_curr_time_last = time(NULL);
-  print_time_last = time(NULL);
   size_t root = SelectRoot(query, cs);
-  // printf("[DEBUG] root is %ld\n", root);
   size_t current_state = 0;
   size_t next_u = 0, next_state;
   size_t max_current_state = 0;
@@ -51,49 +44,30 @@ void Backtrack::PrintAllMatches(const Graph &data, const Graph &query, const Can
   while (state_space[0].second.size() != 0) {
     time(&end_time);
     time(&max_curr_time_check);
-    time(&print_time_check);
-    
 
     if (max_current_state < query.GetNumVertices()-1) {
-      if(max_curr_time_check - max_curr_time_last > JUMP_TIME && end_time - start_time > 30)
-      {
+      if(max_curr_time_check - max_curr_time_last > 0.1 && end_time - start_time > 30) {
         current_state = Jump(current_state);
-        // print_time_last = time(NULL);
         max_curr_time_last = time(NULL);
       }
     }
-    // else 
-    // {
-    //   if (print_time_check - print_time_last > 1 && end_time - start_time > 30) {
-    //     current_state = Jump(current_state);
-    //     print_time_last = time(NULL);
-    //     max_curr_time_last = time(NULL);
-    //   }
-    // }
-    // printf("\n\n===============[DEBUG](end_time - start_time) = %ld==============\n", (end_time - start_time));
+
+    /* 1 minute time out
     if ((end_time - start_time) >= 60) {
       printf("Time out\n");
       printf("Total embedding %d found\n", this->count);
       break;
-    }
-    // printf("[DEBUG] current_state = %ld\n", current_state);
+    } */
+
     if (current_state == query.GetNumVertices()-1) {
       PrintnClear(current_state);
-      print_time_last = time(NULL);
       current_state = GoBack(current_state);
     }
 
     next_state = state_space[current_state + 1].first;
     if (next_state == SIZE_MAX) {
-      // printf("[DEBUG] before nextU\n");
-      // print_set(this->extendable_vertex, "extendable vertex");
-      // print_partial_embedding(this->partial_embedding, "partial_embedding");
-      // printf("[DEBUG] current state_space (%ld %ld)\n", state_space[current_state].first, state_space[current_state].second.top());
       next_u = NextU(data, query, cs);
-      // printf("[DEBUG] next_u = %ld\n", next_u);
       DeleteExtendableVertex(next_u, query);
-      // printf("[DEBUG] after DeleteExtenableVertex\n");
-      // print_set(this->extendable_vertex, "extendable vertex");
       current_state++;
       if (!PushU(next_u, current_state, cs, data, query)){
         current_state = GoBack(current_state);
@@ -101,13 +75,10 @@ void Backtrack::PrintAllMatches(const Graph &data, const Graph &query, const Can
 
       max_curr_time_last = time(NULL);
       max_current_state = current_state;
-
     } else {
       next_u = next_state;
-      // printf("[DEBUG] (not calling NextU) next_u = %ld\n", next_u);
       current_state++;
       if (!PushU(next_u, current_state, cs, data, query)) {
-        // print_partial_embedding(this->partial_embedding, "before GoBack");
         current_state = GoBack(current_state);
       }
     }
@@ -130,12 +101,6 @@ size_t Backtrack::GoBack(size_t current_state) {
     this->partial_embedding.erase(this->state_space[current_state].first);
     state_space[current_state].second.pop();
   }
-  // print_state_space(state_space);
-  // print_partial_embedding(partial_embedding, "[DEBUG]");
-  // if (current_state != 0) {
-  //   this->partial_embedding.insert({this->state_space[current_state].first, 
-  //                                   this->state_space[current_state].second.top()});
-  // }
 
   if(current_state==0 && this->state_space[0].second.empty()) {
     return 0;
@@ -148,16 +113,12 @@ size_t Backtrack::GoBack(size_t current_state) {
 }
 
 size_t Backtrack::Jump(size_t current_state) {
-  printf("[DEBUG] current_state = %ld\n", current_state);
+  
   if (current_state == 1) { return current_state; }
-  
-  print_partial_embedding(partial_embedding, "[DEBUG] before jump");
-  print_state_space(this->state_space);  
-  
+
   size_t new_state = current_state;
   size_t jump_ratio = 2;
   size_t target_state = (current_state > jump_ratio) ? (current_state - current_state / jump_ratio) : (current_state - 1);
-  // size_t target_state = current_state - 3;
   
   while(!this->state_space[new_state].second.empty()) {
     this->state_space[new_state].second.pop();
@@ -171,17 +132,10 @@ size_t Backtrack::Jump(size_t current_state) {
       this->state_space[new_state].second.pop();
     }
   }
-  print_partial_embedding(partial_embedding, "[DEBUG] after jump"); 
-  printf("[DEBUG] after jump new_state = %ld\n", new_state);
   new_state = this->GoBack(new_state);
 
-  print_partial_embedding(partial_embedding, "[DEBUG] after jumpnGoback"); 
-  print_state_space(this->state_space);  
-
-  printf("[DEBUG] after jumpGoback new_state = %ld\n", new_state);
   return new_state;
 }
-
 
 bool Backtrack::EmbeddingCondition(const Graph &data, const Graph &query, std::pair<size_t, size_t> u_v) {
   
@@ -213,6 +167,7 @@ bool Backtrack::EmbeddingCondition(const Graph &data, const Graph &query, std::p
 }
 
 void Backtrack::DeleteExtendableVertex(size_t u, const Graph &query) {
+  
   size_t i, start_offset, end_offset;
   size_t child_candidate;
   std::set<size_t>::iterator iter;
@@ -236,10 +191,11 @@ void Backtrack::DeleteExtendableVertex(size_t u, const Graph &query) {
 }
 
 size_t Backtrack::NextU(const Graph &data, const Graph &query, const CandidateSet &cs) {
+  
   std::set<size_t>::iterator iter;
   std::pair<size_t, size_t> u_v;
   int i, v_size, cmu_size, min_cmu_size = INT32_MAX;
-  size_t u, v, next_u = 0;
+  size_t u = 0, v, next_u = 0;
 
   for (iter = this->extendable_vertex.begin(); iter != this->extendable_vertex.end(); iter++) {
     u = *iter;
@@ -257,26 +213,22 @@ size_t Backtrack::NextU(const Graph &data, const Graph &query, const CandidateSe
     size_t u_label = query.GetLabel(u);
     size_t next_u_label = query.GetLabel(next_u);
 
-    //if (cmu_size < min_cmu_size && cmu_size != 0) {
-    if (cmu_size < min_cmu_size){
+    if (cmu_size < min_cmu_size) {
       min_cmu_size = cmu_size;
       next_u = u;
     }
-    else if (cmu_size == min_cmu_size){
-      if(query.GetLabelFrequency(u_label) <= query.GetLabelFrequency(next_u_label)){
-        if(query.GetDegree(u) > query.GetDegree(next_u))
-        {
+    else if (cmu_size == min_cmu_size) {
+      if (query.GetLabelFrequency(u_label) <= query.GetLabelFrequency(next_u_label)) {
+        if (query.GetDegree(u) > query.GetDegree(next_u)) {
           next_u = u;
         }
       }
-    }    
+    }
   }
 
   if (min_cmu_size == INT32_MAX) {
     next_u = u;
   }
-
-  print_u_info(query, cs, next_u, min_cmu_size);
 
   return next_u;
 }
@@ -284,6 +236,7 @@ size_t Backtrack::NextU(const Graph &data, const Graph &query, const CandidateSe
 // Select root vertex with miminum critera value
 // criteria = (# of v corresponding to u in cs) / (Degree of vertex)
 size_t Backtrack::SelectRoot(const Graph &query, const CandidateSet &cs) {
+  
   size_t cs_size = query.GetNumVertices();
   size_t criteria, root_number = 0, min = 100;
   size_t i, start_offset, end_offset;
@@ -306,17 +259,14 @@ size_t Backtrack::SelectRoot(const Graph &query, const CandidateSet &cs) {
     this->extendable_vertex.insert(query.GetNeighbor(i));
   }
 
-  printf("===========[INSIGHT PLEASE] total vertices %d =========\n", query.GetNumVertices());
-  print_u_info(query, cs, root_number, -1);
   return root_number;
 }
 
 bool Backtrack::PushU(size_t u, size_t current_state, const CandidateSet &cs, const Graph &data, const Graph &query) {
 
-  size_t i, v_size;
+  size_t i, v_size, stack_value, tmp;
   std::pair<size_t, size_t> p1;
   size_t v, num_v_in_stack = 0;
-
   std::stack <size_t> new_stack;
   
   v_size = cs.GetCandidateSize(u);
@@ -326,8 +276,7 @@ bool Backtrack::PushU(size_t u, size_t current_state, const CandidateSet &cs, co
   // Find possible v-s in candidate set by checking embedding condition
   // Push it to state space
 
-  for (i = 0; i < v_size; i++) {
-    
+  for (i = 0; i < v_size; i++) {   
     v = cs.GetCandidate(u, i);
     p1 = std::make_pair(u, v);
     
@@ -338,21 +287,19 @@ bool Backtrack::PushU(size_t u, size_t current_state, const CandidateSet &cs, co
     }
   }
 
-  
-
   while(!new_stack.empty()){
-    size_t stack_value = new_stack.top();
+    stack_value = new_stack.top();
+    
     new_stack.pop();
 
-    if(!this->state_space[current_state].second.empty() && data.GetDegree(stack_value) >= data.GetDegree(this->state_space[current_state].second.top()))
-    {
+    if (!this->state_space[current_state].second.empty() && 
+        data.GetDegree(stack_value) >= data.GetDegree(this->state_space[current_state].second.top())) {
       this->state_space[current_state].second.push(stack_value);
-    }
-    else 
-    {
-      while(!this->state_space[current_state].second.empty() && data.GetDegree(this->state_space[current_state].second.top()) < data.GetDegree(stack_value))
-      {
-        size_t tmp = this->state_space[current_state].second.top();
+    } else {
+      
+      while(!this->state_space[current_state].second.empty() && 
+            data.GetDegree(this->state_space[current_state].second.top()) < data.GetDegree(stack_value)) {
+        tmp = this->state_space[current_state].second.top();
         new_stack.push(tmp);
         this->state_space[current_state].second.pop();
       }
@@ -380,29 +327,37 @@ void Backtrack::PrintnClear(size_t current_state) {
   }
 
   while (!this->state_space[current_state].second.empty()) {
-    
+
     print_array[state_space[current_state].first] = this->state_space[current_state].second.top();
     
     this->state_space[current_state].second.pop();
     this->count++;
-    std::cout << "\nresult " << this->count << std::endl;
+    
+    // std::cout << "\nresult " << this->count << std::endl;
+    
     for (i = 0; i < n; i++) {
       std::cout << print_array[i] << " ";
     }
+    std::cout << std::endl;
+
+    if (this->count >= 100000) {
+      printf("100000 Embeddings found!\n");
+      exit(0);
+    }
   }
-  std::cout << std::endl;
+
   delete[] print_array;
+
 }
 
-
-
-
-// Helper functions for Debugging
+/*
+ * Helper functions for Debugging
+ */
 void print_set(std::set<size_t> question, const char* msg) {
   std::set<size_t>::iterator iter;
   printf("---[SET] print %s----\n", msg);
   for (iter = question.begin(); iter != question.end(); iter++) {
-    printf("%ld ", *iter);
+    printf("%zu ", *iter);
   }
   printf("\n---------------------------\n");
 }
@@ -412,7 +367,7 @@ void print_partial_embedding(std::map<size_t, size_t> partial_embedding, const c
   printf("-------[PARTIAL_EMBED] %s--------\n", msg);
   printf("(u, v) = ");
   for (iter = partial_embedding.begin(); iter != partial_embedding.end(); iter++) {
-    printf("(%ld, %ld) ", iter->first, iter->second);
+    printf("(%zu, %zu) ", iter->first, iter->second);
   }
   printf("\n-------------------------------------\n");
 }
@@ -421,7 +376,7 @@ void print_vector(std::vector<size_t> question, const char* msg) {
   std::vector<size_t>::iterator iter;
   printf("---[VECTOR] print %s----\n", msg);
   for (iter = question.begin(); iter != question.end(); iter++) {
-    printf("%ld ", *iter);
+    printf("%zu ", *iter);
   }
   printf("\n---------------------------\n");
 }
@@ -432,9 +387,9 @@ void print_state_space(std::vector<std::pair<size_t, std::stack<size_t>>> questi
   int i = 0;
   for (iter = question.begin(); iter != question.end(); iter++, i++) {
     if (iter->second.empty()) {
-      printf("([%d], %ld)->E  ", i, iter->first);
+      printf("([%d], %zu)->E  ", i, iter->first);
     } else {
-      printf("([%d], %ld)->%ld  ", i, iter->first, iter->second.top());
+      printf("([%d], %zu)->%zu  ", i, iter->first, iter->second.top());
     }
   }
   printf("\n-----------------------\n");
@@ -450,7 +405,7 @@ void check_synchronization(std::vector<std::pair<size_t, std::stack<size_t>>> st
       u_from_stack = iter->first;
       v_from_pe = partial_embedding.find(u_from_stack)->second;
       if(v_from_pe != v_from_stack) {
-        printf("[ERROR] u(%ld) -> v_from_pe(%ld), v_from_stack(%ld)\n", u_from_stack, v_from_pe, v_from_stack);
+        printf("[ERROR] u(%zu) -> v_from_pe(%zu), v_from_stack(%zu)\n", u_from_stack, v_from_pe, v_from_stack);
         exit(0);
       }
     }  
@@ -458,5 +413,5 @@ void check_synchronization(std::vector<std::pair<size_t, std::stack<size_t>>> st
 }
 
 void print_u_info(const Graph &query, const CandidateSet &cs, size_t u, size_t cmu) {
-  printf("u = %ld |  Deg = %ld | CandidateSize = %ld | CMU = %ld\n", u, query.GetDegree(u), cs.GetCandidateSize(u), cmu);
+  printf("u = %zu |  Deg = %zu | CandidateSize = %zu | CMU = %zu\n", u, query.GetDegree(u), cs.GetCandidateSize(u), cmu);
 }
