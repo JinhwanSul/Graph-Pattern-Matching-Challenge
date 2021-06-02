@@ -24,13 +24,13 @@ mkdir build/result
 ./build/main/program ./data/lcc_human.igraph ./query/lcc_human_s5.igraph ./candidate_set/lcc_human_s5.cs > ./build/result/lcc_human_s5_result.txt
 ./build/main/program ./data/lcc_human.igraph ./query/lcc_human_s8.igraph ./candidate_set/lcc_human_s8.cs > ./build/result/lcc_human_s8_result.txt
 
-# Execute human n1~n8
+# Execute yeast n1~n8
 ./build/main/program ./data/lcc_yeast.igraph ./query/lcc_yeast_n1.igraph ./candidate_set/lcc_yeast_n1.cs > ./build/result/lcc_yeast_n1_result.txt
 ./build/main/program ./data/lcc_yeast.igraph ./query/lcc_yeast_n3.igraph ./candidate_set/lcc_yeast_n3.cs > ./build/result/lcc_yeast_n3_result.txt
 ./build/main/program ./data/lcc_yeast.igraph ./query/lcc_yeast_n5.igraph ./candidate_set/lcc_yeast_n5.cs > ./build/result/lcc_yeast_n5_result.txt
 ./build/main/program ./data/lcc_yeast.igraph ./query/lcc_yeast_n8.igraph ./candidate_set/lcc_yeast_n8.cs > ./build/result/lcc_yeast_n8_result.txt
 
-# Execute hprd s1~s8
+# Execute yeast s1~s8
 ./build/main/program ./data/lcc_yeast.igraph ./query/lcc_yeast_s1.igraph ./candidate_set/lcc_yeast_s1.cs > ./build/result/lcc_yeast_s1_result.txt
 ./build/main/program ./data/lcc_yeast.igraph ./query/lcc_yeast_s3.igraph ./candidate_set/lcc_yeast_s3.cs > ./build/result/lcc_yeast_s3_result.txt
 ./build/main/program ./data/lcc_yeast.igraph ./query/lcc_yeast_s5.igraph ./candidate_set/lcc_yeast_s5.cs > ./build/result/lcc_yeast_s5_result.txt

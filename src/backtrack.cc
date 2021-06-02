@@ -132,7 +132,14 @@ size_t Backtrack::GoBack(size_t current_state) {
   }
   // print_state_space(state_space);
   // print_partial_embedding(partial_embedding, "[DEBUG]");
-  if (current_state != 0) {
+  // if (current_state != 0) {
+  //   this->partial_embedding.insert({this->state_space[current_state].first, 
+  //                                   this->state_space[current_state].second.top()});
+  // }
+
+  if(current_state==0 && this->state_space[0].second.empty()) {
+    return 0;
+  } else {
     this->partial_embedding.insert({this->state_space[current_state].first, 
                                     this->state_space[current_state].second.top()});
   }
@@ -246,8 +253,8 @@ size_t Backtrack::NextU(const Graph &data, const Graph &query, const CandidateSe
       }
     }
     
-    if (cmu_size < min_cmu_size && cmu_size != 0) {
-    //if (cmu_size < min_cmu_size) {
+    //if (cmu_size < min_cmu_size && cmu_size != 0) {
+    if (cmu_size < min_cmu_size) {
       min_cmu_size = cmu_size;
       next_u = u;
     }
