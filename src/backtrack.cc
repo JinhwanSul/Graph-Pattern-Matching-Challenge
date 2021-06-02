@@ -253,13 +253,23 @@ size_t Backtrack::NextU(const Graph &data, const Graph &query, const CandidateSe
       }
     }
     
+    
+    size_t u_label = query.GetLabel(u);
+    size_t next_u_label = query.GetLabel(next_u);
+
     //if (cmu_size < min_cmu_size && cmu_size != 0) {
-    if (cmu_size <= min_cmu_size) {
+    if (cmu_size < min_cmu_size){
       min_cmu_size = cmu_size;
       next_u = u;
     }
-     
-    
+    else if (cmu_size == min_cmu_size){
+      if(query.GetLabelFrequency(u_label) <= query.GetLabelFrequency(next_u_label)){
+        if(query.GetDegree(u) > query.GetDegree(next_u))
+        {
+          next_u = u;
+        }
+      }
+    }    
   }
 
   if (min_cmu_size == INT32_MAX) {
