@@ -6,7 +6,7 @@
 #include "backtrack.h"
 #include <assert.h>
 
-#define JUMP_TIME 5
+#define JUMP_TIME 30
 
 void print_set(std::set<size_t> question, const char *msg);
 void print_vector(std::vector<size_t> question, const char *msg);
@@ -254,10 +254,12 @@ size_t Backtrack::NextU(const Graph &data, const Graph &query, const CandidateSe
     }
     
     //if (cmu_size < min_cmu_size && cmu_size != 0) {
-    if (cmu_size < min_cmu_size) {
+    if (cmu_size <= min_cmu_size) {
       min_cmu_size = cmu_size;
       next_u = u;
     }
+     
+    
   }
 
   if (min_cmu_size == INT32_MAX) {
@@ -304,6 +306,8 @@ bool Backtrack::PushU(size_t u, size_t current_state, const CandidateSet &cs, co
   size_t i, v_size;
   std::pair<size_t, size_t> p1;
   size_t v, num_v_in_stack = 0;
+
+  std::stack <size_t> new_stack;
   
   v_size = cs.GetCandidateSize(u);
   
@@ -318,10 +322,34 @@ bool Backtrack::PushU(size_t u, size_t current_state, const CandidateSet &cs, co
     p1 = std::make_pair(u, v);
     
     if (EmbeddingCondition(data, query, p1)) {
-      this->state_space[current_state].second.push(v);
+      // this->state_space[current_state].second.push(v);
+      new_stack.push(v);
       num_v_in_stack++;
     }
   }
+
+  
+
+  while(!new_stack.empty()){
+    size_t stack_value = new_stack.top();
+    new_stack.pop();
+
+    if(!this->state_space[current_state].second.empty() && data.GetDegree(stack_value) >= data.GetDegree(this->state_space[current_state].second.top()))
+    {
+      this->state_space[current_state].second.push(stack_value);
+    }
+    else 
+    {
+      while(!this->state_space[current_state].second.empty() && data.GetDegree(this->state_space[current_state].second.top()) < data.GetDegree(stack_value))
+      {
+        size_t tmp = this->state_space[current_state].second.top();
+        new_stack.push(tmp);
+        this->state_space[current_state].second.pop();
+      }
+      this->state_space[current_state].second.push(stack_value);
+    }
+  }
+
   if (num_v_in_stack != 0) {
     this->partial_embedding.insert({u, this->state_space[current_state].second.top()});
   }
