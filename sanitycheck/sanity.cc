@@ -2,6 +2,7 @@
 #include "candidate_set.h"
 #include "common.h"
 #include "graph.h"
+#include <sstream>
 
 int main(int argc, char* argv[]) {
 	
@@ -20,35 +21,58 @@ int main(int argc, char* argv[]) {
   CandidateSet candidate_set(candidate_set_file_name);
 	
 	std::ifstream fin_lines(result_file_name);
-	size_t num_lines = 0;
-	std::string trash;
-	while (std::getline(fin_lines, trash)) {
-		num_lines++;
-	}
-	std::cout << "\n" << result_file_name << " Sanity check!\n";
-	if (num_lines == 0) {
-		printf("Fail to find embeddings\n");
-		exit(0);
-	} else if (num_lines == 100000) {
-    printf("100000 Embeddings found!\n");
-	} else {
-		printf("%zu Embeddings found!\n", num_lines);
-	}
-
-	std::ifstream fin(result_file_name);
-	if (!fin.is_open()) {
+	if (!fin_lines.is_open()) {
     std::cout << "Result file " << result_file_name << " not found!\n";
     exit(EXIT_FAILURE);
   }
 
-	size_t tmp, i, j, array_size = query.GetNumVertices();
+	size_t num_lines = 0, tmp, i, j, array_size = query.GetNumVertices();;
+	std::string one_line;
+	std::stringstream line_stream;
 	size_t *array = new size_t[array_size];
+	char identifier;
 
-	for(i = 0; i<array_size; i++) {
-		fin >> tmp;
-		array[i] = tmp;
+	std::cout << "\n" << result_file_name << " Sanity check!\n";
+	
+	while (std::getline(fin_lines, one_line)) {
+		// printf("%s", one_line.c_str());
+		if (num_lines == 0) {
+			line_stream.str(one_line);
+			line_stream >> identifier;
+			num_lines++;
+			continue;
+		}
+
+		num_lines++;
+		line_stream.str(one_line);
+		line_stream >> identifier;
+		// printf("%c, %d\n", identifier, num_lines);
+		for (i = 0; i < array_size; i++) {
+			line_stream >> tmp;
+			array[i] = tmp;
+		}
 	}
-	fin.close();
+	
+	if (num_lines == 1) {
+		printf("Fail to find embeddings\n");
+		exit(0);
+	} else if (num_lines == 100001) {
+    printf("100000 Embeddings found!\n");
+	} else {
+		printf("%zu Embeddings found!\n", num_lines-1);
+	}
+
+	// std::ifstream fin(result_file_name);
+	// if (!fin.is_open()) {
+  //   std::cout << "Result file " << result_file_name << " not found!\n";
+  //   exit(EXIT_FAILURE);
+  // }
+
+	// for(i = 0; i<array_size; i++) {
+	// 	fin >> tmp;
+	// 	array[i] = tmp;
+	// }
+	// fin.close();
  
 	//조건 1 : injective
 	//입력받은 v들끼리 중복 확인
