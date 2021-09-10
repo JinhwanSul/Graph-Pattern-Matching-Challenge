@@ -14,6 +14,7 @@ make
 ```
 ### Achievement
 Silver prize: 설진환, 김재형
+
 https://github.com/SNUCSE-CTA/Graph-Pattern-Matching-Challenge
 
 ### References
